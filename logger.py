@@ -8,7 +8,7 @@ import matplotlib.animation as animation
 # Create figure for plotting and lists for accumulating the data:
 fig = plt.figure()  # Global
 ax = fig.add_subplot(1, 1, 1)  # (nrows, ncols, index). Global
-xs = [0]  # Global
+xs = [0]  # range(0, 5, 0.1)  # Global
 ys = [0]  # Global
 
 # Initialize communication with TMP102
@@ -31,8 +31,8 @@ def animate(i, xs, ys):
     ys.append(Vxy)  # ys.append(temp_c)
 
     # Limit x and y lists to last 50 items
-    xs = xs[-50:]
-    ys = ys[-50:]
+    # xs = xs[-50:]
+    # ys = ys[-50:]
 
     # Draw x and y lists
     ax.clear()
@@ -45,11 +45,11 @@ def animate(i, xs, ys):
     plt.ylabel('Vxy')
     plt.xlabel('B, Tesla')
 
+    if i >= 50:
+        print(f'STOP:i = {i}')
+        return
+
 
 # Set up plot to call animate() function periodically
-ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys), interval=500)
-if len(xs) > 10:
-    ani.pause()
-
-plt.pause(100)  # Display plot for 10s.
-# plt.show()
+ani = animation.FuncAnimation(fig, animate, fargs=(xs, ys), frames=50, interval=500)
+plt.show()

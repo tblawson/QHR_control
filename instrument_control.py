@@ -40,8 +40,9 @@ class SMS:  # Superconducting Magnet Supply
         print(self.msg)
         print('----------------------')
 
-    def send_cmd(self, command):
-        print(f'Sending command "{command}"')
+    def send_cmd(self, command, verbose=True):
+        if verbose:
+            print(f'Sending command "{command}"')
         self.instr.clear()
         time.sleep(0.5)
         self.instr.write(command)
@@ -57,16 +58,24 @@ class SMS:  # Superconducting Magnet Supply
         return line
 
     def get_field(self):
-        self.send_cmd('tesla on')  # Ensure units are Tesla
+        self.send_cmd('tesla on', False)  # Ensure units are Tesla
         self.read_buffer()  # clear output buffer
-        self.send_cmd('get output')
+        self.send_cmd('get output', False)
         response = self.read_buffer()
         return self._extract_fieldvalue(response)
 
-    def _extract_fieldvalue(self, s):
+    @staticmethod
+    def _extract_fieldvalue(s):
+        """
+        Extract field numeric value <y> from message string of the form:
+        'xx:xx:xx OUTPUT: <y> : TESLA @ <z> VOLTS'
+        :param s: message (string)
+        :return: field in Tesla (float)
+        """
         print(s)
-        field = s[s.find(': ')+1:s.find(' TESLA')]
+        field = s[17:s.find(' TESLA')]
         return float(field)
+
 
 """
 Main script (for testing) _________________________________________
