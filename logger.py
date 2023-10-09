@@ -3,7 +3,7 @@
 # import datetime as dt
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-# import tmp102
+
 
 # Create figure for plotting and lists for accumulating the data:
 fig = plt.figure()  # Global
@@ -11,8 +11,6 @@ ax = fig.add_subplot(1, 1, 1)  # (nrows, ncols, index). Global
 xs = [0]  # range(0, 5, 0.1)  # Global
 ys = [0]  # Global
 
-# Initialize communication with TMP102
-# tmp102.init()
 
 
 # This function is called periodically from FuncAnimation
@@ -26,7 +24,7 @@ def animate(i, xs, ys):
     # temp_c = round(tmp102.read_temp(), 2)
 
     # Add x and y to lists
-    # xs.append(dt.datetime.now().strftime('%H:%M:%S.%f'))
+    # xs.append(dt.datetime.now().strftime('%H:%M:%S'))
     xs.append(mag)
     ys.append(Vxy)  # ys.append(temp_c)
 
