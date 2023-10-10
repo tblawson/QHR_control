@@ -76,52 +76,72 @@ class SMS:  # Superconducting Magnet Supply
         field = s[17:s.find(' TESLA')]
         return float(field)
 
+    def ramp_finished(self):
+        self.send_cmd('ramp status')
+        response = self.read_buffer()
+        if 'HOLDING ON TARGET' in response:
+            return True
+        else:
+            return False
+
+"""
+Useful functions _________________________________________
+"""
+
+
+def gpibaddr_str2num(addr_str):  #
+    return addr_str[7:addr_str.find('::INSTR')]
+
+def gpibaddr_num2str(addr):
+    return f'GPIB0::{addr}::INSTR'
+# _____________________________________________________________
+
 
 """
 Main script (for testing) _________________________________________
 """
-QUIT = ['q', 'Q', 'quit', 'Quit', 'QUIT', 'exit', 'Exit', 'EXIT']
+# QUIT = ['q', 'Q', 'quit', 'Quit', 'QUIT', 'exit', 'Exit', 'EXIT']
 
-rm = visa.ResourceManager()
-print(rm.list_resources())
+# rm = visa.ResourceManager()
+# print(rm.list_resources())
+#
+# magnet_addr_str = input('Full GPIB address? > ')
+# magnet_interface = rm.open_resource(magnet_addr_str)
+# magnet_interface.clear()
+# magnet = SMS(magnet_interface)  # Create SMS object called 'magnet'
 
-magnet_addr_str = input('Full GPIB address? > ')
-magnet_interface = rm.open_resource(magnet_addr_str)
-magnet_interface.clear()
-magnet = SMS(magnet_interface)  # Create SMS object called 'magnet'
-
-magnet.show_sign_on_msg()
-
-print(f'current field = {magnet.get_field()} T')
-
-prev_cmd = cmd = '*IDN?'  # Default command
+# magnet.show_sign_on_msg()
+#
+# print(f'current field = {magnet.get_field()} T')
+#
+# prev_cmd = cmd = '*IDN?'  # Default command
 """
 Control-loop.
 """
-while True:
-    cmd = input('Enter command > ')
-
-    # Special control-loop commands:
-    if cmd in QUIT:
-        break
-    if cmd == 'r':  # repeat last command
-        cmd = prev_cmd
-
-    # Common cmd aliases:
-    if cmd == 'mid':
-        cmd = 'ramp mid'
-    if cmd == 'max':
-        cmd = 'ramp max'
-    if cmd == 'zero':
-        cmd = 'ramp zero'
-    if cmd == 'stat':
-        cmd = 'ramp status'
-    if cmd == 'out':
-        cmd = 'get output'
-
-    magnet.send_cmd(cmd)
-    print(magnet.read_buffer())
-
-    prev_cmd = cmd
-
-print('FINISHED.')
+# while True:
+#     cmd = input('Enter command > ')
+#
+#     # Special control-loop commands:
+#     if cmd in QUIT:
+#         break
+#     if cmd == 'r':  # repeat last command
+#         cmd = prev_cmd
+#
+#     # Common cmd aliases:
+#     if cmd == 'mid':
+#         cmd = 'ramp mid'
+#     if cmd == 'max':
+#         cmd = 'ramp max'
+#     if cmd == 'zero':
+#         cmd = 'ramp zero'
+#     if cmd == 'stat':
+#         cmd = 'ramp status'
+#     if cmd == 'out':
+#         cmd = 'get output'
+#
+#     magnet.send_cmd(cmd)
+#     print(magnet.read_buffer())
+#
+#     prev_cmd = cmd
+#
+# print('FINISHED.')
