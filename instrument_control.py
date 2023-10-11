@@ -77,17 +77,17 @@ class SMS:  # Superconducting Magnet Supply
         return float(field)
 
     def ramp_finished(self):
-        self.send_cmd('ramp status')
+        self.send_cmd('ramp status',False)
         response = self.read_buffer()
         if 'HOLDING ON TARGET' in response:
             return True
         else:
             return False
 
+
 """
 Useful functions _________________________________________
 """
-
 
 def gpibaddr_str2num(addr_str):  #
     return addr_str[7:addr_str.find('::INSTR')]
