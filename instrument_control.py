@@ -1,6 +1,5 @@
 # instrument_control.py
 
-import pyvisa as visa
 import time
 
 
@@ -46,6 +45,7 @@ class SMS:  # Superconducting Magnet Supply
         self.instr.clear()
         time.sleep(0.5)
         self.instr.write(command)
+        time.sleep(0.5)
         return command
 
     def read_buffer(self):
@@ -55,13 +55,28 @@ class SMS:  # Superconducting Magnet Supply
             line = self.instr.read()
             if len(line) > 8:
                 break
+        (self.header, self.indicator, self.argument) = self.parse_message(line)
+        print(f'header = {self.header}')
+        print(f'indicator = {self.indicator}')
+        print(f'argument = {self.argument}')
         return line
 
+    @staticmethod
+    def parse_message(m):
+        header = m[0:8]
+        ind_arg = m[9:-1]
+        indicator, argument = ind_arg.split(':')  # m[9:m[9:-1].find(':')]
+        # print(f'header = "{header}"; indicator = "{indicator}"; argument = "{argument}"')
+        return header, indicator, argument
+
     def get_field(self):
-        self.send_cmd('tesla on', False)  # Ensure units are Tesla
-        self.read_buffer()  # clear output buffer
+        # print(f'___ get_field() ___:')
         self.send_cmd('get output', False)
-        response = self.read_buffer()
+        self.read_buffer()
+        self.send_cmd('get output', True)  # Repeat to flush...
+        response = self.read_buffer()      # ...ramp status msg
+        # print(f'___ get_field() ___: response="{response}"\n')
+        time.sleep(0.5)
         return self._extract_fieldvalue(response)
 
     @staticmethod
@@ -72,25 +87,55 @@ class SMS:  # Superconducting Magnet Supply
         :param s: message (string)
         :return: field in Tesla (float)
         """
-        print(s)
+        # print(f'___ _extract_fieldvalue() ___ from "{s}"')
         field = s[17:s.find(' TESLA')]
-        return float(field)
+        try:
+            return float(field)
+        except ValueError:
+            return '-'
+        # if field.isnumeric():
+        #     return float(field)
+        # else:
+        #     return field
 
     def ramp_finished(self):
-        self.send_cmd('ramp status',False)
+        self.send_cmd('ramp status', False)
         response = self.read_buffer()
         if 'HOLDING ON TARGET' in response:
             return True
         else:
             return False
 
+    def is_ramping(self):
+        self.send_cmd('ramp status', False)
+        response = self.read_buffer()
+        if ': RAMPING ' in response:
+            return True
+        else:
+            return False
+
+    def run_ramp(self, dvm_visa, Vs, Bs):
+        while True:
+            # print(f'## TESTING ## - run_ramp(): Vs={Vs}, Bs={Bs}')
+            v = dvm_visa.read()  # query('READ?')
+            Vs.append(v)
+            field = self.get_field()
+            Bs.append(field)
+            print(f'{v} V; {field} T')
+            if self.ramp_finished():
+                print('___ run_ramp() ___ : run_ramp(): BREAKING RAMP LOOP.')
+                break
+        return Vs, Bs
+
 
 """
 Useful functions _________________________________________
 """
 
+
 def gpibaddr_str2num(addr_str):  #
     return addr_str[7:addr_str.find('::INSTR')]
+
 
 def gpibaddr_num2str(addr):
     return f'GPIB0::{addr}::INSTR'
