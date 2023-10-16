@@ -65,6 +65,10 @@ data_path = "G:/Shared drives/MSL - Electricity - Ongoing/QHR_CCC/Data_and_Analy
 filename = "test.csv"
 data_file = os.path.join(data_path, filename)
 
-# with open(data_file, w, newline=""):
-#     csv.
+datalines = zip(magnet.Bs, magnet.Vs)
+with open(data_file, w, newline=""):
+    writer = csv.writer(data_file)
+    for line in datalines:
+        writer.writerow(line)
+
 print('FINISHED.')

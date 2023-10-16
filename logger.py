@@ -12,7 +12,6 @@ xs = [0]  # range(0, 5, 0.1)  # Global
 ys = [0]  # Global
 
 
-
 # This function is called periodically from FuncAnimation
 def animate(i, xs, ys):
 
