@@ -62,12 +62,13 @@ while True:
 
 # Data storage:
 data_path = "G:/Shared drives/MSL - Electricity - Ongoing/QHR_CCC/Data_and_Analysis/Python_logging"
-filename = "test.csv"
-data_file = os.path.join(data_path, filename)
+name = "test.csv"
+filename = os.path.join(data_path, name)
 
-datalines = zip(magnet.Bs, magnet.Vs)
-with open(data_file, w, newline=""):
-    writer = csv.writer(data_file)
+datalines = zip(magnet.times, magnet.Bs, magnet.Vs)
+with open(filename, 'w', newline="") as fp:
+    writer = csv.writer(fp)
+    writer.writerow(['time', 'B', 'V'])  # Headers
     for line in datalines:
         writer.writerow(line)
 
