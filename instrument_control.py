@@ -1,7 +1,7 @@
 # instrument_control.py
 
 import time
-
+DELAY = 0.1
 
 class SMS:  # Superconducting Magnet Supply
     """
@@ -14,8 +14,10 @@ class SMS:  # Superconducting Magnet Supply
         self.instr = instr
         self.instr.write_termination = '\r'  # '\r\n'
         self.instr.timeout = 2000  # default 2 s timeout
-        # print(self.instr.read())
         self._get_sign_on_msg()
+        # Use this magnet instance to store ALL instrument readings.
+        self.Bs = []  # B-field
+        self.Vs = []  # Vxy
 
     def _get_sign_on_msg(self):
         """
@@ -43,89 +45,111 @@ class SMS:  # Superconducting Magnet Supply
         if verbose:
             print(f'Sending command "{command}"')
         self.instr.clear()
-        time.sleep(0.5)
+        time.sleep(DELAY)
         self.instr.write(command)
-        time.sleep(0.5)
+        time.sleep(DELAY)
         return command
 
-    def read_buffer(self):
+    def read_buffer(self, echo=True):
         self.instr.clear()
-        time.sleep(0.5)
+        time.sleep(DELAY)
         while True:
             line = self.instr.read()
             if len(line) > 8:
                 break
-        (self.header, self.indicator, self.argument) = self.parse_message(line)
-        print(f'header = {self.header}')
-        print(f'indicator = {self.indicator}')
-        print(f'argument = {self.argument}')
+        # self.parse_message(line)
+        if echo:
+            print(line)
         return line
 
     @staticmethod
     def parse_message(m):
-        header = m[0:8]
-        ind_arg = m[9:-1]
-        indicator, argument = ind_arg.split(':')  # m[9:m[9:-1].find(':')]
-        # print(f'header = "{header}"; indicator = "{indicator}"; argument = "{argument}"')
+        """
+        Divide magnet messages into header, indicator and argument sections.
+        :param m: (string) message.
+        :return: tuple of strings: (header, indicator, argument)
+        """
+        # print(f'Parsing "{m}"')
+        header = m[0:8]  # 1st 9 characters
+        ind_arg = m[9:-1]  # rest of message is "<indicator>:<argument>"
+        indicator, argument = ind_arg.split(':')
         return header, indicator, argument
 
     def get_field(self):
-        # print(f'___ get_field() ___:')
+        """
+        Query magnet for an OUTPUT message and extract the field value.
+        :return: string
+        """
         self.send_cmd('get output', False)
-        self.read_buffer()
-        self.send_cmd('get output', True)  # Repeat to flush...
-        response = self.read_buffer()      # ...ramp status msg
-        # print(f'___ get_field() ___: response="{response}"\n')
-        time.sleep(0.5)
+        self.read_buffer(echo=False)  # Prints (by default) and returns message
+        time.sleep(DELAY)
+        self.send_cmd('get output', False)  # Repeat to flush...
+        response = self.read_buffer(echo=False)      # ...ramp status msg
+        time.sleep(DELAY)
         return self._extract_fieldvalue(response)
 
-    @staticmethod
-    def _extract_fieldvalue(s):
+    def _extract_fieldvalue(self, s):
         """
         Extract field numeric value <y> from message string of the form:
         'xx:xx:xx OUTPUT: <y> : TESLA @ <z> VOLTS'
         :param s: message (string)
         :return: field in Tesla (float)
         """
-        # print(f'___ _extract_fieldvalue() ___ from "{s}"')
-        field = s[17:s.find(' TESLA')]
-        try:
-            return float(field)
-        except ValueError:
-            return '-'
-        # if field.isnumeric():
-        #     return float(field)
-        # else:
-        #     return field
+        (header, indicator, argument) = self.parse_message(s)
+        if indicator == 'OUTPUT' and 'TESLA' in argument:
+            try:
+                field = argument[0:argument.find(' TESLA')]
+                return float(field)
+            except ValueError:
+                print(f'Magnet response error: {s}')
+                return '-x-'
+        elif indicator == 'RAMP STATUS':
+            return '-END-'
 
     def ramp_finished(self):
+        """
+        Determine if the ramp has completed by checking the ramp status.
+        :return: boolean
+        """
         self.send_cmd('ramp status', False)
-        response = self.read_buffer()
+        response = self.read_buffer(echo=False)  # Prints (by default) and returns message
         if 'HOLDING ON TARGET' in response:
+            print(f'Ramp finished: {response}')
             return True
         else:
+            # print(f'Ramp still running: {response}')
             return False
 
     def is_ramping(self):
+        """
+        Determine if the ramp is still underway by checking the ramp status.
+        :return: boolean
+        """
         self.send_cmd('ramp status', False)
-        response = self.read_buffer()
+        response = self.read_buffer(echo=False)  # Prints (by default) and returns message
         if ': RAMPING ' in response:
             return True
         else:
             return False
 
-    def run_ramp(self, dvm_visa, Vs, Bs):
+    def run_ramp(self, dvm_visa):
+        """
+        Acquire data until the magnet stops ramping.
+        :param dvm_visa: dvm visa instance
+        :param Vs: list for voltage readings
+        :param Bs: list for field readings
+        :return: Vs, Bs: lists of voltages and field readings
+        """
         while True:
-            # print(f'## TESTING ## - run_ramp(): Vs={Vs}, Bs={Bs}')
-            v = dvm_visa.read()  # query('READ?')
-            Vs.append(v)
+            v = dvm_visa.read()
+            self.Vs.append(v)
             field = self.get_field()
-            Bs.append(field)
+            self.Bs.append(field)
             print(f'{v} V; {field} T')
             if self.ramp_finished():
-                print('___ run_ramp() ___ : run_ramp(): BREAKING RAMP LOOP.')
+                print('___ run_ramp() ___ : BREAKING RAMP LOOP.')
                 break
-        return Vs, Bs
+        return
 
 
 """
@@ -140,53 +164,3 @@ def gpibaddr_str2num(addr_str):  #
 def gpibaddr_num2str(addr):
     return f'GPIB0::{addr}::INSTR'
 # _____________________________________________________________
-
-
-"""
-Main script (for testing) _________________________________________
-"""
-# QUIT = ['q', 'Q', 'quit', 'Quit', 'QUIT', 'exit', 'Exit', 'EXIT']
-
-# rm = visa.ResourceManager()
-# print(rm.list_resources())
-#
-# magnet_addr_str = input('Full GPIB address? > ')
-# magnet_interface = rm.open_resource(magnet_addr_str)
-# magnet_interface.clear()
-# magnet = SMS(magnet_interface)  # Create SMS object called 'magnet'
-
-# magnet.show_sign_on_msg()
-#
-# print(f'current field = {magnet.get_field()} T')
-#
-# prev_cmd = cmd = '*IDN?'  # Default command
-"""
-Control-loop.
-"""
-# while True:
-#     cmd = input('Enter command > ')
-#
-#     # Special control-loop commands:
-#     if cmd in QUIT:
-#         break
-#     if cmd == 'r':  # repeat last command
-#         cmd = prev_cmd
-#
-#     # Common cmd aliases:
-#     if cmd == 'mid':
-#         cmd = 'ramp mid'
-#     if cmd == 'max':
-#         cmd = 'ramp max'
-#     if cmd == 'zero':
-#         cmd = 'ramp zero'
-#     if cmd == 'stat':
-#         cmd = 'ramp status'
-#     if cmd == 'out':
-#         cmd = 'get output'
-#
-#     magnet.send_cmd(cmd)
-#     print(magnet.read_buffer())
-#
-#     prev_cmd = cmd
-#
-# print('FINISHED.')
