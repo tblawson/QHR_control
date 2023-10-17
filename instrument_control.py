@@ -147,7 +147,7 @@ class SMS:  # Superconducting Magnet Supply
         :param dvm_visa: dvm visa instance
         :return: Vs, Bs: lists of voltages and field readings
         """
-        plt.show()
+
         while True:
             t = dt.datetime.now().strftime('%H:%M:%S')
             self.times.append(t)
@@ -159,7 +159,7 @@ class SMS:  # Superconducting Magnet Supply
             print(f'{t}\t{v} V; {field} T')
             if self.ramp_finished():
                 print('BREAKING RAMP LOOP.')
-                plt.close(1)  # Close plot 1
+                plt.show()  # Steals thread focus!!
                 break
         return
 
