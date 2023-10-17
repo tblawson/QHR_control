@@ -2,6 +2,7 @@
 
 import time
 import datetime as dt
+import matplotlib.pyplot as plt
 DELAY = 0.1
 
 
@@ -23,6 +24,9 @@ class SMS:  # Superconducting Magnet Supply
         self.times = []  # Ramp timestamps
         self.Bs = []  # B-field
         self.Vs = []  # Vxy
+        # Setup plot (used during ramp)
+        self.fig = plt.figure(1)  # open plot 1
+        self.ax = self.fig.add_subplot(1, 1, 1)  # (nrows, ncols, index). Global
 
     def _get_sign_on_msg(self):
         """
@@ -139,12 +143,11 @@ class SMS:  # Superconducting Magnet Supply
 
     def run_ramp(self, dvm_visa):
         """
-        Acquire data until the magnet stops ramping.
+        Acquire and plot data until the magnet stops ramping.
         :param dvm_visa: dvm visa instance
-        :param Vs: list for voltage readings
-        :param Bs: list for field readings
         :return: Vs, Bs: lists of voltages and field readings
         """
+        plt.show()
         while True:
             t = dt.datetime.now().strftime('%H:%M:%S')
             self.times.append(t)
@@ -152,11 +155,22 @@ class SMS:  # Superconducting Magnet Supply
             self.Vs.append(v)
             field = self.get_field()
             self.Bs.append(field)
+            self.plot_data()
             print(f'{t}\t{v} V; {field} T')
             if self.ramp_finished():
-                print('___ run_ramp() ___ : BREAKING RAMP LOOP.')
+                print('BREAKING RAMP LOOP.')
+                plt.close(1)  # Close plot 1
                 break
         return
+
+    def plot_data(self):
+        self.ax.clear()
+        self.ax.plot(self.Bs, self.Vs)
+        plt.xticks(ha='center')  # (rotation=45, ha='right') (ha = horizontal alignment)
+        plt.subplots_adjust(bottom=0.30)
+        plt.title(f'Vxy vs B-field')
+        plt.ylabel('Vxy')
+        plt.xlabel('B, Tesla')
 
 
 """
