@@ -1,7 +1,9 @@
 # instrument_control.py
 
 import time
+import datetime as dt
 DELAY = 0.1
+
 
 class SMS:  # Superconducting Magnet Supply
     """
@@ -14,8 +16,11 @@ class SMS:  # Superconducting Magnet Supply
         self.instr = instr
         self.instr.write_termination = '\r'  # '\r\n'
         self.instr.timeout = 2000  # default 2 s timeout
-        self._get_sign_on_msg()
+        line = self._get_sign_on_msg()
+        if 'AMPS' in line:
+            self.send_cmd('TESLA ON')  # ensure readings are in Tesla
         # Use this magnet instance to store ALL instrument readings.
+        self.times = []  # Ramp timestamps
         self.Bs = []  # B-field
         self.Vs = []  # Vxy
 
@@ -141,11 +146,13 @@ class SMS:  # Superconducting Magnet Supply
         :return: Vs, Bs: lists of voltages and field readings
         """
         while True:
+            t = dt.datetime.now().strftime('%H:%M:%S')
+            self.times.append(t)
             v = dvm_visa.read()
             self.Vs.append(v)
             field = self.get_field()
             self.Bs.append(field)
-            print(f'{v} V; {field} T')
+            print(f'{t}\t{v} V; {field} T')
             if self.ramp_finished():
                 print('___ run_ramp() ___ : BREAKING RAMP LOOP.')
                 break
