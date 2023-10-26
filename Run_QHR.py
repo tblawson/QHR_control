@@ -16,8 +16,11 @@ print(rm.list_resources())
 # Set up magnet as a visa resource:
 magnet_addr_str = control.gpibaddr_num2str(input('magnet GPIB addr? > '))
 # magnet_addr_str = 'GPIB0::4::INSTR'  # control.gpibaddr_num2str('4')
+
 magnet_interface = rm.open_resource(magnet_addr_str)
 magnet_interface.clear()
+
+
 magnet = control.SMS(magnet_interface)  # Create SMS object called 'magnet'
 magnet.show_sign_on_msg()  # Print multi-line message, summarising magnet supply state.
 
@@ -57,7 +60,7 @@ while True:
 
     if magnet.is_ramping():
         magnet.run_ramp(dvm)  # Loops until ramp ends. Data is in magnet.Bs and magnet.Vs
-    # print('\n___________ END OF MAIN LOOP ____________\n')
+
 # END OF LOOP -----------------
 
 # Data storage:

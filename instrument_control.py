@@ -3,6 +3,7 @@
 import time
 import datetime as dt
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 DELAY = 0.1
 
 
@@ -89,10 +90,10 @@ class SMS:  # Superconducting Magnet Supply
         Query magnet for an OUTPUT message and extract the field value.
         :return: string
         """
-        self.send_cmd('get output', False)
+        self.send_cmd('get output', verbose=False)
         self.read_buffer(echo=False)  # Prints (by default) and returns message
         time.sleep(DELAY)
-        self.send_cmd('get output', False)  # Repeat to flush...
+        self.send_cmd('get output', verbose=False)  # Repeat to flush...
         response = self.read_buffer(echo=False)      # ...ramp status msg
         time.sleep(DELAY)
         return self._extract_fieldvalue(response)
@@ -120,7 +121,7 @@ class SMS:  # Superconducting Magnet Supply
         Determine if the ramp has completed by checking the ramp status.
         :return: boolean
         """
-        self.send_cmd('ramp status', False)
+        self.send_cmd('ramp status', verbose=False)
         response = self.read_buffer(echo=False)  # Prints (by default) and returns message
         if 'HOLDING ON TARGET' in response:
             print(f'Ramp finished: {response}')
@@ -134,12 +135,13 @@ class SMS:  # Superconducting Magnet Supply
         Determine if the ramp is still underway by checking the ramp status.
         :return: boolean
         """
-        self.send_cmd('ramp status', False)
+        self.send_cmd('ramp status', verbose=False)
         response = self.read_buffer(echo=False)  # Prints (by default) and returns message
         if ': RAMPING ' in response:
             return True
         else:
             return False
+
 
     def run_ramp(self, dvm_visa):
         """
@@ -147,30 +149,52 @@ class SMS:  # Superconducting Magnet Supply
         :param dvm_visa: dvm visa instance
         :return: Vs, Bs: lists of voltages and field readings
         """
-
-        while True:
-            t = dt.datetime.now().strftime('%H:%M:%S')
-            self.times.append(t)
-            v = dvm_visa.read()
-            self.Vs.append(v)
-            field = self.get_field()
-            self.Bs.append(field)
-            self.plot_data()
-            print(f'{t}\t{v} V; {field} T')
-            if self.ramp_finished():
-                print('BREAKING RAMP LOOP.')
-                plt.show()  # Steals thread focus!!
-                break
+        fig = plt.figure()
+        self. ax = fig.add_subplot(1, 1, 1)  # (nrows, ncols, index)
+        ani = animation.FuncAnimation(fig, self.animate, fargs=(xs, ys), frames=50, interval=1000)
+        plt.show()
         return
 
-    def plot_data(self):
+    def animate(i, self):
+        t = dt.datetime.now().strftime('%H:%M:%S')
+        self.times.append(t)
+        v = dvm_visa.read()
+        self.Vs.append(v)
+        field = self.get_field()
+        self.Bs.append(field)
         self.ax.clear()
-        self.ax.plot(self.Bs, self.Vs)
+        self.ax.plot(Bs, Vs)
         plt.xticks(ha='center')  # (rotation=45, ha='right') (ha = horizontal alignment)
         plt.subplots_adjust(bottom=0.30)
-        plt.title(f'Vxy vs B-field')
+        plt.title(f'Plotting point {i}')
         plt.ylabel('Vxy')
         plt.xlabel('B, Tesla')
+        return
+
+    # def run_ramp(self, dvm_visa):
+    #     while True:
+    #         t = dt.datetime.now().strftime('%H:%M:%S')
+    #         self.times.append(t)
+    #         v = dvm_visa.read()
+    #         self.Vs.append(v)
+    #         field = self.get_field()
+    #         self.Bs.append(field)
+    #         self.plot_data()
+    #         print(f'{t}\t{v} V; {field} T')
+    #         if self.ramp_finished():
+    #             print('BREAKING RAMP LOOP.')
+    #             plt.show()  # Steals thread focus!!
+    #             break
+    #     return
+
+    # def plot_data(self):
+    #     self.ax.clear()
+    #     self.ax.plot(self.Bs, self.Vs, 'b.')
+    #     plt.xticks(ha='center')  # (rotation=45, ha='right') (ha = horizontal alignment)
+    #     plt.subplots_adjust(bottom=0.30)
+    #     plt.title(f'Vxy vs B-field')
+    #     plt.ylabel('Vxy')
+    #     plt.xlabel('B, Tesla')
 
 
 """
