@@ -8,7 +8,10 @@ Plot V vs B and simultaneously write data to csv files.
 import os
 import pyvisa as visa
 import csv
+import datetime as dt
 import instrument_control as control
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
 
 rm = visa.ResourceManager()
 print(rm.list_resources())
@@ -16,22 +19,48 @@ print(rm.list_resources())
 # Set up magnet as a visa resource:
 magnet_addr_str = control.gpibaddr_num2str(input('magnet GPIB addr? > '))
 # magnet_addr_str = 'GPIB0::4::INSTR'  # control.gpibaddr_num2str('4')
-
 magnet_interface = rm.open_resource(magnet_addr_str)
 magnet_interface.clear()
-
-
 magnet = control.SMS(magnet_interface)  # Create SMS object called 'magnet'
 magnet.show_sign_on_msg()  # Print multi-line message, summarising magnet supply state.
 
 # Set up dvm as a visa resource
-# dvm_addr_str = control.gpibaddr_num2str(input('dvm GPIB addr? > '))
 dvm_addr_str = 'GPIB0::25::INSTR'  # control.gpibaddr_num2str('25')
 dvm = rm.open_resource(dvm_addr_str)
 dvm.timeout = 2000
 dvm.read_termination = '\r\n'
 dvm.write_termination = '\r\n'
 
+# ----------------------------------------------------
+# Plotting-related stuff...
+
+times = []  # Ramp timestamps
+Bs = []  # B-field
+Vs = []  # Vxy
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)  # (nrows, ncols, index)
+
+
+def animate(i, dvm_visa, Bs, Vs):
+    t = dt.datetime.now().strftime('%H:%M:%S')
+    times.append(t)
+    v = dvm_visa.read()
+    Vs.append(v)
+    field = magnet.get_field()
+    Bs.append(field)
+    ax.clear()
+    ax.plot(Bs, Vs)
+    plt.xticks(ha='center')  # (rotation=45, ha='right') (ha = horizontal alignment)
+    plt.subplots_adjust(bottom=0.30)
+    plt.title(f'Plotting point {i}')
+    plt.ylabel('Vxy')
+    plt.xlabel('B, Tesla')
+    return
+# ----------------------------------------------------
+
+
+# ----------------------------------------------------
+# Control loop command aliases:
 QUIT = ['q', 'Q', 'quit', 'Quit', 'QUIT', 'exit', 'Exit', 'EXIT']
 RAMP_ALIASES = {'mid': 'ramp mid',
                 'max': 'ramp max',
@@ -59,16 +88,18 @@ while True:
     magnet.read_buffer()  # Prints (by default) and returns message
 
     if magnet.is_ramping():
-        magnet.run_ramp(dvm)  # Loops until ramp ends. Data is in magnet.Bs and magnet.Vs
+        ani = animation.FuncAnimation(fig, animate, fargs=(dvm, Bs, Vs), frames=50, interval=500)
+        plt.show()
+        # magnet.run_ramp(dvm)  # Loops until ramp ends. Data is in magnet.Bs and magnet.Vs
 
-# END OF LOOP -----------------
+# END OF CONTROL LOOP -----------------
 
 # Data storage:
 data_path = "G:/Shared drives/MSL - Electricity - Ongoing/QHR_CCC/Data_and_Analysis/Python_logging"
 name = "test.csv"
 filename = os.path.join(data_path, name)
 
-datalines = zip(magnet.times, magnet.Bs, magnet.Vs)
+datalines = zip(times, Bs, Vs)
 with open(filename, 'w', newline="") as fp:
     writer = csv.writer(fp)
     writer.writerow(['time', 'B', 'V'])  # Headers

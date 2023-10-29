@@ -2,8 +2,8 @@
 
 import time
 import datetime as dt
-import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+# import matplotlib.pyplot as plt
+# import matplotlib.animation as animation
 DELAY = 0.1
 
 
@@ -22,12 +22,12 @@ class SMS:  # Superconducting Magnet Supply
         if 'AMPS' in line:
             self.send_cmd('TESLA ON')  # ensure readings are in Tesla
         # Use this magnet instance to store ALL instrument readings.
-        self.times = []  # Ramp timestamps
-        self.Bs = []  # B-field
-        self.Vs = []  # Vxy
+        # self.times = []  # Ramp timestamps
+        # self.Bs = []  # B-field
+        # self.Vs = []  # Vxy
         # Setup plot (used during ramp)
-        self.fig = plt.figure(1)  # open plot 1
-        self.ax = self.fig.add_subplot(1, 1, 1)  # (nrows, ncols, index). Global
+        # self.fig = plt.figure(1)  # open plot 1
+        # self.ax = self.fig.add_subplot(1, 1, 1)  # (nrows, ncols, index). Global
 
     def _get_sign_on_msg(self):
         """
@@ -143,33 +143,33 @@ class SMS:  # Superconducting Magnet Supply
             return False
 
 
-    def run_ramp(self, dvm_visa):
-        """
-        Acquire and plot data until the magnet stops ramping.
-        :param dvm_visa: dvm visa instance
-        :return: Vs, Bs: lists of voltages and field readings
-        """
-        fig = plt.figure()
-        self. ax = fig.add_subplot(1, 1, 1)  # (nrows, ncols, index)
-        ani = animation.FuncAnimation(fig, self.animate, fargs=(xs, ys), frames=50, interval=1000)
-        plt.show()
-        return
-
-    def animate(i, self):
-        t = dt.datetime.now().strftime('%H:%M:%S')
-        self.times.append(t)
-        v = dvm_visa.read()
-        self.Vs.append(v)
-        field = self.get_field()
-        self.Bs.append(field)
-        self.ax.clear()
-        self.ax.plot(Bs, Vs)
-        plt.xticks(ha='center')  # (rotation=45, ha='right') (ha = horizontal alignment)
-        plt.subplots_adjust(bottom=0.30)
-        plt.title(f'Plotting point {i}')
-        plt.ylabel('Vxy')
-        plt.xlabel('B, Tesla')
-        return
+    # def run_ramp(self, dvm_visa):
+    #     """
+    #     Acquire and plot data until the magnet stops ramping.
+    #     :param dvm_visa: dvm visa instance
+    #     :return: Vs, Bs: lists of voltages and field readings
+    #     """
+    #     fig = plt.figure()
+    #     self. ax = fig.add_subplot(1, 1, 1)  # (nrows, ncols, index)
+    #     ani = animation.FuncAnimation(fig, self.animate, fargs=(xs, ys), frames=50, interval=1000)
+    #     plt.show()
+    #     return
+    #
+    # def animate(i, self):
+    #     t = dt.datetime.now().strftime('%H:%M:%S')
+    #     self.times.append(t)
+    #     v = dvm_visa.read()
+    #     self.Vs.append(v)
+    #     field = self.get_field()
+    #     self.Bs.append(field)
+    #     self.ax.clear()
+    #     self.ax.plot(Bs, Vs)
+    #     plt.xticks(ha='center')  # (rotation=45, ha='right') (ha = horizontal alignment)
+    #     plt.subplots_adjust(bottom=0.30)
+    #     plt.title(f'Plotting point {i}')
+    #     plt.ylabel('Vxy')
+    #     plt.xlabel('B, Tesla')
+    #     return
 
     # def run_ramp(self, dvm_visa):
     #     while True:
