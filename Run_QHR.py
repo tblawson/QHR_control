@@ -6,6 +6,8 @@ Plot V vs B and simultaneously write data to csv files.
 
 
 import os
+import time
+
 import pyvisa as visa
 import csv
 import datetime as dt
@@ -37,11 +39,12 @@ dvm.write_termination = '\r\n'
 times = []  # Ramp timestamps
 Bs = []  # B-field
 Vs = []  # Vxy
-fig = plt.figure()
-ax = fig.add_subplot(1, 1, 1)  # (nrows, ncols, index)
 
 
 def animate(i, dvm_visa, Bs, Vs):
+    if magnet.ramp_finished():
+        plt.close()
+        return
     t = dt.datetime.now().strftime('%H:%M:%S')
     times.append(t)
     v = dvm_visa.read()
@@ -51,7 +54,7 @@ def animate(i, dvm_visa, Bs, Vs):
     ax.clear()
     ax.plot(Bs, Vs)
     plt.xticks(ha='center')  # (rotation=45, ha='right') (ha = horizontal alignment)
-    plt.subplots_adjust(bottom=0.30)
+    plt.subplots_adjust(bottom=0.10, left=0.28)
     plt.title(f'Plotting point {i}')
     plt.ylabel('Vxy')
     plt.xlabel('B, Tesla')
@@ -74,6 +77,9 @@ while True:
     """
     cmd = input('Enter magnet command (or: "q" to quit; "r" to repeat last cmd)> ')
 
+    fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)  # (nrows, ncols, index)
+
     # Special control-loop commands:
     if cmd in QUIT:
         break
@@ -83,20 +89,19 @@ while True:
 
     if cmd in CMD_ALIASES:
         cmd = CMD_ALIASES[cmd]
-
     magnet.send_cmd(cmd)
     magnet.read_buffer()  # Prints (by default) and returns message
 
     if magnet.is_ramping():
-        ani = animation.FuncAnimation(fig, animate, fargs=(dvm, Bs, Vs), frames=50, interval=500)
+        ani = animation.FuncAnimation(fig, animate, fargs=(dvm, Bs, Vs), frames=50, interval=500, repeat=False)
         plt.show()
-        # magnet.run_ramp(dvm)  # Loops until ramp ends. Data is in magnet.Bs and magnet.Vs
 
 # END OF CONTROL LOOP -----------------
 
 # Data storage:
+t_stamp = dt.datetime.now().strftime('%y%m%d_%H_%M_%S')
 data_path = "G:/Shared drives/MSL - Electricity - Ongoing/QHR_CCC/Data_and_Analysis/Python_logging"
-name = "test.csv"
+name = f"test_{t_stamp}.csv"
 filename = os.path.join(data_path, name)
 
 datalines = zip(times, Bs, Vs)
@@ -105,5 +110,6 @@ with open(filename, 'w', newline="") as fp:
     writer.writerow(['time', 'B', 'V'])  # Headers
     for line in datalines:
         writer.writerow(line)
+    writer.writerow(['END', 'END', 'END'])
 
 print('FINISHED.')
