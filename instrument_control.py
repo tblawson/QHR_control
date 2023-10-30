@@ -142,61 +142,6 @@ class SMS:  # Superconducting Magnet Supply
         else:
             return False
 
-
-    # def run_ramp(self, dvm_visa):
-    #     """
-    #     Acquire and plot data until the magnet stops ramping.
-    #     :param dvm_visa: dvm visa instance
-    #     :return: Vs, Bs: lists of voltages and field readings
-    #     """
-    #     fig = plt.figure()
-    #     self. ax = fig.add_subplot(1, 1, 1)  # (nrows, ncols, index)
-    #     ani = animation.FuncAnimation(fig, self.animate, fargs=(xs, ys), frames=50, interval=1000)
-    #     plt.show()
-    #     return
-    #
-    # def animate(i, self):
-    #     t = dt.datetime.now().strftime('%H:%M:%S')
-    #     self.times.append(t)
-    #     v = dvm_visa.read()
-    #     self.Vs.append(v)
-    #     field = self.get_field()
-    #     self.Bs.append(field)
-    #     self.ax.clear()
-    #     self.ax.plot(Bs, Vs)
-    #     plt.xticks(ha='center')  # (rotation=45, ha='right') (ha = horizontal alignment)
-    #     plt.subplots_adjust(bottom=0.30)
-    #     plt.title(f'Plotting point {i}')
-    #     plt.ylabel('Vxy')
-    #     plt.xlabel('B, Tesla')
-    #     return
-
-    # def run_ramp(self, dvm_visa):
-    #     while True:
-    #         t = dt.datetime.now().strftime('%H:%M:%S')
-    #         self.times.append(t)
-    #         v = dvm_visa.read()
-    #         self.Vs.append(v)
-    #         field = self.get_field()
-    #         self.Bs.append(field)
-    #         self.plot_data()
-    #         print(f'{t}\t{v} V; {field} T')
-    #         if self.ramp_finished():
-    #             print('BREAKING RAMP LOOP.')
-    #             plt.show()  # Steals thread focus!!
-    #             break
-    #     return
-
-    # def plot_data(self):
-    #     self.ax.clear()
-    #     self.ax.plot(self.Bs, self.Vs, 'b.')
-    #     plt.xticks(ha='center')  # (rotation=45, ha='right') (ha = horizontal alignment)
-    #     plt.subplots_adjust(bottom=0.30)
-    #     plt.title(f'Vxy vs B-field')
-    #     plt.ylabel('Vxy')
-    #     plt.xlabel('B, Tesla')
-
-
 """
 Useful functions _________________________________________
 """
