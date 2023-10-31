@@ -1,9 +1,7 @@
 # instrument_control.py
 
 import time
-import datetime as dt
-# import matplotlib.pyplot as plt
-# import matplotlib.animation as animation
+
 DELAY = 0.1
 
 
