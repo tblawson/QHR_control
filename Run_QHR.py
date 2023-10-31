@@ -32,6 +32,8 @@ dvm = rm.open_resource(dvm_addr_str)
 dvm.timeout = 2000
 dvm.read_termination = '\r\n'
 dvm.write_termination = '\r\n'
+dvm.write('FUNC OHMF,1e5')
+dvm.write('OCOMP ON')
 
 # ----------------------------------------------------
 # Plotting-related stuff...
@@ -56,7 +58,7 @@ def animate(i, dvm_visa, Bs, Vs):
     plt.xticks(ha='center')  # (rotation=45, ha='right') (ha = horizontal alignment)
     plt.subplots_adjust(bottom=0.10, left=0.28)
     plt.title(f'Plotting point {i}')
-    plt.ylabel('Vxy')
+    plt.ylabel('4-terminal resistance, ohms')
     plt.xlabel('B, Tesla')
     return
 # ----------------------------------------------------
