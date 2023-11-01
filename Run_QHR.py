@@ -58,7 +58,7 @@ def animate(i, dvm_visa, Bs, Vs):
     plt.xticks(ha='center')  # (rotation=45, ha='right') (ha = horizontal alignment)
     plt.subplots_adjust(bottom=0.10, left=0.28)
     plt.title(f'Plotting point {i}')
-    plt.ylabel('4-terminal resistance, ohms')
+    plt.ylabel('4-terminal resistance, kohm')
     plt.xlabel('B, Tesla')
     return
 # ----------------------------------------------------
