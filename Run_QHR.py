@@ -42,6 +42,12 @@ times = []  # Ramp timestamps
 Bs = []  # B-field
 Vs = []  # Vxy
 
+# Data storage:
+t_stamp = dt.datetime.now().strftime('%y%m%d_%H_%M_%S')
+data_path = "G:/Shared drives/MSL - Electricity - Ongoing/QHR_CCC/Data_and_Analysis/Python_logging"
+name = f"test_{t_stamp}.csv"
+filename = os.path.join(data_path, name)
+
 
 def animate(i, dvm_visa, Bs, Vs):
     if magnet.ramp_finished():
@@ -95,21 +101,15 @@ while True:
     magnet.read_buffer()  # Prints (by default) and returns message
 
     if magnet.is_ramping():
-        ani = animation.FuncAnimation(fig, animate, fargs=(dvm, Bs, Vs), frames=50, interval=500, repeat=False)
+        ani = animation.FuncAnimation(fig, animate, fargs=(dvm, Bs, Vs), frames=500, interval=500, repeat=False)
         plt.show()
 
 # END OF CONTROL LOOP -----------------
 
-# Data storage:
-t_stamp = dt.datetime.now().strftime('%y%m%d_%H_%M_%S')
-data_path = "G:/Shared drives/MSL - Electricity - Ongoing/QHR_CCC/Data_and_Analysis/Python_logging"
-name = f"test_{t_stamp}.csv"
-filename = os.path.join(data_path, name)
-
 datalines = zip(times, Bs, Vs)
 with open(filename, 'w', newline="") as fp:
     writer = csv.writer(fp)
-    writer.writerow(['time', 'B', 'V'])  # Headers
+    writer.writerow(['time', 'B, Tesla', 'R, kohm'])  # Headers
     for line in datalines:
         writer.writerow(line)
     writer.writerow(['END', 'END', 'END'])
